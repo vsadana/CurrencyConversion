@@ -51,6 +51,11 @@ extension BaseClassVC : UITextFieldDelegate {
         }
     }
     
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {   //delegate method
+      textField.resignFirstResponder()
+      return true
+    } 
+    
     @objc func textSearchFieldDidChange(_ textField: UITextField) {
         if let text = textField.text {
             delegate?.didSearchTF(text: text)
