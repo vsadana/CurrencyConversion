@@ -31,6 +31,9 @@ class ViewController: BaseClassVC {
         // Do any additional setup after loading the view.
         if let data = UserDefaults.standard.currencyData, !data.isEmpty {
             //nothing
+            if (CurrencyEnum(rawValue: UserDefaults.standard.currencyData?["base"] as! String) ?? .USD) != .USD  {
+                baseCurrency = .USD
+            }
         } else {
             getCurrencyData()
         }
