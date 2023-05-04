@@ -9,6 +9,7 @@ import UIKit
 
 class ViewController: BaseClassVC {
     
+    @IBOutlet weak var searchTf: UITextField!
     @IBOutlet weak var btnSelectedCurrency: UIButton!
     @IBOutlet weak var dropDownView: UIView!
     @IBOutlet weak var dropDownCollectionView: UICollectionView!
@@ -25,6 +26,9 @@ class ViewController: BaseClassVC {
     }
     var currentCurrecyAmt : Double = 1
     var timer : Timer?
+    var itemsInsection = 0
+    var rates = [String:Any]()
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,6 +38,8 @@ class ViewController: BaseClassVC {
             if (CurrencyEnum(rawValue: UserDefaults.standard.currencyData?["base"] as! String) ?? .USD) != .USD  {
                 baseCurrency = .USD
             }
+            rates = UserDefaults.standard.currencyData?["rates"] as! [String:Any]
+            self.itemsInsection = (UserDefaults.standard.currencyData?["rates"] as? [String:Any])?.keys.count ?? 0
         } else {
             getCurrencyData()
         }
@@ -41,6 +47,7 @@ class ViewController: BaseClassVC {
         currencyCollectionView.collectionViewLayout = generateLayout()
         dropDownCollectionView.collectionViewLayout = generateLayoutForDropDown()
         lblAmount.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingChanged)
+        searchTf.addTarget(self, action: #selector(textSearchFieldDidChange(_:)), for: .editingChanged)
         lblAmount.inputAccessoryView = toolBar()
         timer = Timer.scheduledTimer(timeInterval: 1800, target: self, selector: #selector(fetchData), userInfo: nil, repeats: true)
         setupUI()
@@ -67,6 +74,7 @@ class ViewController: BaseClassVC {
         dropDownCollectionView.delegate = self
         lblAmount.delegate = self
         delegate = self
+        searchTf.delegate = self
         
     }
     
@@ -74,7 +82,9 @@ class ViewController: BaseClassVC {
     func getCurrencyData(){
         vmObj.getCurrencyData(app_id: app_id,baseCurrency: baseCurrency.rawValue) { data in
             if data != nil {
+                self.itemsInsection = (data?["rates"] as? [String:Any])?.keys.count ?? 0
                 UserDefaults.standard.currencyData =  data
+                self.rates = UserDefaults.standard.currencyData?["rates"] as! [String:Any]
                 DispatchQueue.main.async {
                     self.currencyCollectionView.isHidden = false
                     self.lblNorecord.isHidden = true
@@ -140,12 +150,10 @@ extension ViewController : UICollectionViewDelegate , UICollectionViewDataSource
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        let data =  UserDefaults.standard.currencyData?["rates"] as? [String:Any]
-        return data?.keys.count ?? 0
+        return itemsInsection
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let rates = UserDefaults.standard.currencyData?["rates"] as! [String:Any]
         let sortedKeys = Array(rates.keys).sorted{
             $0.localizedCaseInsensitiveCompare($1) == ComparisonResult.orderedAscending
         }
@@ -163,7 +171,6 @@ extension ViewController : UICollectionViewDelegate , UICollectionViewDataSource
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let rates = UserDefaults.standard.currencyData?["rates"] as! [String:Any]
         let sortedKeys = Array(rates.keys).sorted{
             $0.localizedCaseInsensitiveCompare($1) == ComparisonResult.orderedAscending
         }
@@ -187,6 +194,16 @@ extension ViewController : UICollectionViewDelegate , UICollectionViewDataSource
 
 //MARK: textfield delegates
 extension ViewController : TextFieldProtocol {
+    func didSearchTF(text: String) {
+        let data  = UserDefaults.standard.currencyData?["rates"] as! [String:Any]
+        let filteredData =  data.filter { (key,value) in
+            return key.lowercased().starts(with: text.lowercased())
+        }
+        itemsInsection = filteredData.count
+        rates =  filteredData
+        currencyCollectionView.reloadData()
+    }
+    
     func didAmountChangeInTf(text: String) {
         currentCurrecyAmt = text.isEmpty ? 1 : Double(text)!
         currencyCollectionView.reloadData()

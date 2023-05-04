@@ -11,6 +11,7 @@ import UIKit
 //MARK: Protocol
 protocol TextFieldProtocol {
     func didAmountChangeInTf(text:String)
+    func didSearchTF(text:String)
 }
 
 class BaseClassVC : UIViewController {
@@ -47,6 +48,12 @@ extension BaseClassVC : UITextFieldDelegate {
     @objc func textFieldDidChange(_ textField: UITextField) {
         if let text = textField.text {
             delegate?.didAmountChangeInTf(text: text)
+        }
+    }
+    
+    @objc func textSearchFieldDidChange(_ textField: UITextField) {
+        if let text = textField.text {
+            delegate?.didSearchTF(text: text)
         }
     }
 }
