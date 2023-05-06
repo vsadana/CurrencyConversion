@@ -150,15 +150,21 @@ extension ViewController : UICollectionViewDelegate , UICollectionViewDataSource
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return itemsInsection
+        if collectionView == currencyCollectionView {
+            return itemsInsection
+        } else {
+            return (UserDefaults.standard.currencyData?["rates"] as? [String:Any])?.keys.count ?? 0
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let sortedKeys = Array(rates.keys).sorted{
+        let ratesNew = UserDefaults.standard.currencyData?["rates"] as! [String:Any]
+        let sortedKeys = collectionView == currencyCollectionView ?  Array(rates.keys).sorted{
+            $0.localizedCaseInsensitiveCompare($1) == ComparisonResult.orderedAscending
+        } :  Array(ratesNew.keys).sorted{
             $0.localizedCaseInsensitiveCompare($1) == ComparisonResult.orderedAscending
         }
         let firstKey = Array(sortedKeys)[indexPath.row]
-        
         if collectionView == currencyCollectionView {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "currencyCollectionViewCell", for: indexPath) as! CurrencyCollectionViewCell
             cell.configure(amount: getConvertedMoney(rates[firstKey]), lblCurrencyName: firstKey)
@@ -171,7 +177,9 @@ extension ViewController : UICollectionViewDelegate , UICollectionViewDataSource
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let sortedKeys = Array(rates.keys).sorted{
+        let ratesNew = UserDefaults.standard.currencyData?["rates"] as! [String:Any]
+
+        let sortedKeys = Array(ratesNew.keys).sorted{
             $0.localizedCaseInsensitiveCompare($1) == ComparisonResult.orderedAscending
         }
         let firstKey = Array(sortedKeys)[indexPath.row]
